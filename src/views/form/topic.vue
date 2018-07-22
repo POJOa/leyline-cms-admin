@@ -57,7 +57,21 @@
               <el-input width="200" placeholder="文章名" v-model="form.latest.title"></el-input>
             </el-form-item>
               <el-form-item label="缩略图">
-                <el-input v-model="form.latest.thumbnail"></el-input>
+
+                    <el-upload
+                      class="avatar-uploader"
+                      :show-file-list="false"
+                      :on-success="handleAvatarSuccess"
+                      :before-upload="beforeAvatarUpload"
+                      :action="uploadAction"
+                      :headers="uploadToken"
+                    >
+                      <img v-if="form.latest.thumbnail" :src="form.latest.thumbnail" class="avatar">
+                      <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                    </el-upload>
+                <el-col :span="12">
+                  <el-input v-model="form.latest.thumbnail"></el-input>
+                </el-col>
               </el-form-item>
               <el-form-item label="简介">
                 <el-input v-model="form.latest.summary"  type="textarea" autosize></el-input>
@@ -107,6 +121,7 @@
 import {updateOne, getByIdAdmin} from "@/api/topic"
 import {getList as getCategoryList} from "@/api/category"
 import {getList as getTagsList} from "@/api/tag"
+import {getUploadFileURL, getUploadToken} from '@/api/upload'
 import MarkdownEditor from '@/components/MarkdownEditor'
 import TopicPreview from './topic_preview'
 const moment = require('moment')
@@ -119,6 +134,7 @@ export default {
   data() {
     return {
       render:false,
+      fileList:[],
       loading:true,
       id:null,
       centerDialogVisible: false,
@@ -130,6 +146,8 @@ export default {
         latest:{title:'',content: '',thumbnail:'',mainVersion:0,subVersion:0,published:false,createdAt:Date.now()},
         tags:[]
       },
+      uploadAction: getUploadFileURL(),
+      uploadToken:getUploadToken(),
       activeNames: '0',
       tags: [],
       categories: []
@@ -177,7 +195,21 @@ export default {
         }
       )
     },
+    handleAvatarSuccess(res, file) {
+      this.form.latest.thumbnail = file.response.fileDownloadUri;
+    },
+    beforeAvatarUpload(file) {
+      const isJPG = file.type.indexOf('image')>=0;
+      const isLt5M = file.size / 1024 / 1024 < 5;
 
+      if (!isJPG) {
+        this.$message.error('只能上传图片!');
+      }
+      if (!isLt5M) {
+        this.$message.error('上传图片大小不能超过 5MB!');
+      }
+      return isJPG && isLt5M;
+    },
     onCancel() {
       this.$router.back(-1)
     },
@@ -222,6 +254,29 @@ export default {
   }
   .previewHtml{
     display: none;
+  }
+  .avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .avatar-uploader .el-upload:hover {
+    border-color: #409EFF;
+  }
+  .avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 356px;
+    height: 178px;
+    line-height: 178px;
+    text-align: center;
+  }
+  .avatar {
+    width: 356px;
+    height: 178px;
+    display: block;
   }
 </style>
 

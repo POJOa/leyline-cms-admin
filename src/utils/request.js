@@ -10,6 +10,8 @@ const service = axios.create({
   paramsSerializer: params => Qs.stringify(params, {arrayFormat: 'repeat'})
 })
 
+service.baseURL = process.env.BASE_API
+service.token =  getToken()
 // request拦截器
 service.interceptors.request.use(config => {
   try{
